@@ -1,3 +1,5 @@
+from typing import List
+
 from dotenv import load_dotenv
 from openai import OpenAI
 import os
@@ -15,7 +17,8 @@ with open("prompt.txt", "r", encoding="utf-8") as f:
     prompt = f.read()
 
 class UserRequest(BaseModel):
-    question: str
+    word: str
+    meaning: List[str]
 
 class AnswerResponse(BaseModel):
     answer: str
@@ -23,13 +26,18 @@ class AnswerResponse(BaseModel):
 @app.post("/chat", response_model=AnswerResponse)
 async def chat(request: UserRequest):
     try:
+        user_input = (
+                f"단어: {request.word}\n"
+                f"뜻:\n" + "\n".join([f"- {m}" for m in request.meaning])
+        )
+
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "developer", "content": prompt},
                 {
                     "role": "user",
-                    "content": request.question,
+                    "content": user_input,
                 },
             ],
         )
